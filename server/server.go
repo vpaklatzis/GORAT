@@ -1,8 +1,6 @@
 package main
 
-import (
-	"grpcapi"
-)
+import "github.com/blackhat-go/bhg/ch-14/grpcapi"
 
 type implantServer struct {
 	work, output chan *grpcapi.Command
