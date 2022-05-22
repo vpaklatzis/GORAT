@@ -86,16 +86,22 @@ func main() {
 	implant := NewImplantServer(work, output)
 	admin := NewAdminServer(work, output)
 	if implantListener, err = net.Listen("tcp", fmt.Sprintf("localhost:%d", 4444)); err != nil {
-		log.Fatal(err)
+		log.Fatal("Implant listener failed to bind to port 4444: ", err)
 	}
 	if adminListener, err = net.Listen("tcp", fmt.Sprintf("localhost:%d", 9090)); err != nil {
-		log.Fatal(err)
+		log.Fatal("Admin listener failed to bind to port 9090: ", err)
 	}
 	grpcAdminServer, grpcImplantServer := grpc.NewServer(opts...), grpc.NewServer(opts...)
 	grpcapi.RegisterImplantServer(grpcImplantServer, implant)
+	log.Println("Starting gRPC implant server listener on port 4444...")
 	grpcapi.RegisterAdminServer(grpcAdminServer, admin)
+	log.Println("Starting gRPC admin server listener on port 9090...")
 	go func() {
-		grpcImplantServer.Serve(implantListener)
+		if err := grpcImplantServer.Serve(implantListener); err != nil {
+			log.Fatal("Implant server failed to serve: ", err)
+		}
 	}()
-	grpcAdminServer.Serve(adminListener)
+	if err := grpcAdminServer.Serve(adminListener); err != nil {
+		log.Fatal("Admin server failed to serve: ", err)
+	}
 }

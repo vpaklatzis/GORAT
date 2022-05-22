@@ -21,10 +21,17 @@ func main() {
 	)
 
 	opts = append(opts, grpc.WithInsecure())
+	log.Println("Trying to reach the admin server...")
+	// establishes connection back to our admin server
 	if conn, err = grpc.Dial(fmt.Sprintf("localhost:%d", 9090), opts...); err != nil {
-		log.Fatal(err)
+		log.Fatal("Admin client could not connect to the server: ", err)
 	}
-	defer conn.Close()
+	log.Println("Connected successfully to the server")
+	defer func(conn *grpc.ClientConn) {
+		if err := conn.Close(); err != nil {
+			log.Fatal("Error occurred while closing the connection: ", err)
+		}
+	}(conn)
 	client = grpcapi.NewAdminClient(conn)
 
 	var cmd = new(grpcapi.Command)
@@ -32,7 +39,7 @@ func main() {
 	ctx := context.Background()
 	cmd, err = client.RunCommand(ctx, cmd)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error occurred while trying to run the command: ", err)
 	}
 	fmt.Println(cmd.Out)
 }
